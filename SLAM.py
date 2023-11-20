@@ -1,6 +1,7 @@
 # Authors: Simone Maravigna, Francesco Marotta
 # Project: SLAM in Formula Student
 
+# libraries
 import matplotlib.pyplot as plt
 
 # defining the radius of the cones
@@ -14,6 +15,15 @@ carStartingPosition = (-6, 3)
 startingCone = [(0,1), (0,5)]
 innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,5), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
 outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)]
+
+# defining car position and orientation
+carEgoPosition = carStartingPosition
+carEgoOrientation = 0
+
+# creating a list of tuples for the visible cones
+orangeVisibleCones = []
+yellowVisibleCones = []
+blueVisibleCones = []
 
 # Plotting the cones
 x_inner, y_inner = zip(*innerCone)
