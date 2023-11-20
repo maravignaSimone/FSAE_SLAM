@@ -6,6 +6,8 @@
 # ----------------------------- #
 import matplotlib.pyplot as plt
 import math
+import numpy as np
+from scipy.spatial import Delaunay
 
 # ----------------------------- #
 # Defining global variables    #
@@ -83,7 +85,6 @@ def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
     """
     This function find the path at the center of the road (between inner and outer cones).
     """
-    
 
 # ----------------------------- #
 # main part  #
@@ -139,3 +140,34 @@ plt.axis('equal')
 plt.legend()
 plt.show()
 print("The SLAM algorithm has finished.")
+
+
+# creating the lists of x and y coordinates for the cones
+x_inner, y_inner = zip(*innerCone)
+x_outer, y_outer = zip(*outerCone)
+x_starting, y_starting = zip(*startingCone)
+
+# Create a list of all cone coordinates
+cone_coordinates = list(innerCone) + list(outerCone) + list(startingCone)
+
+# Perform Delaunay triangulation
+tri = Delaunay(cone_coordinates)
+print(tri)
+# Plotting the oriented car, with the right orientation(Yaw) and FOV
+plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
+plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw', scale=15)
+plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green', label = 'FOV')
+plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
+
+# Plotting the cones
+plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
+plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
+plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
+
+# Plotting the Delaunay triangulation
+x_cone, y_cone = zip(*cone_coordinates)
+plt.triplot(x_cone, y_cone, tri.simplices, color='red', label='Delaunay Triangulation')
+
+# Show the plot
+plt.legend()
+plt.show()
