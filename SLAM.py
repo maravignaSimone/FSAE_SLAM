@@ -15,7 +15,7 @@ from scipy.spatial import Delaunay
 startingConeRadius = 0.202 # measures in meters the radius of the starting cone
 coneRadius = 0.162 # measures in meters the radius of the cones
 
-carStartingPosition = (-6, 3) # coordinates of the starting position of the car
+carStartingPosition = (3, 3) # coordinates of the starting position of the car
 startingCone = [(0,1), (0,5)] # coordinates of the starting cone
 
 fovAngle = 2*math.pi/3 # measures in radian the FOV
@@ -25,13 +25,14 @@ carEgoPosition = carStartingPosition # coordinates of the car
 carEgoYaw = 0 # radian wrt x axis
 
 # coordinates of the cones
-innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,5), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
-outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)]
-
+innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
+outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)]
 # lists of the cones that are in the FOV of the car
 seenInnerCones = []
 seenOuterCones = []
 seenStartingCone = []
+# list of the points of the trajectory
+trajectoryPoints = []
 # ----------------------------- #
 # Defining helper functions    #
 # ----------------------------- #
@@ -143,16 +144,21 @@ print("The SLAM algorithm has finished.")
 
 
 # creating the lists of x and y coordinates for the cones
-x_inner, y_inner = zip(*innerCone)
-x_outer, y_outer = zip(*outerCone)
-x_starting, y_starting = zip(*startingCone)
+x_inner, y_inner = zip(*seenInnerCones)
+x_outer, y_outer = zip(*seenOuterCones)
 
 # Create a list of all cone coordinates
-cone_coordinates = list(innerCone) + list(outerCone) + list(startingCone)
-
+#cone_coordinates has to alternate between inner and outer cones (inner, outer, inner, outer, ...)
+cone_coordinates = [x for y in zip(seenInnerCones, seenOuterCones) for x in y]
+print(cone_coordinates)
 # Perform Delaunay triangulation
 tri = Delaunay(cone_coordinates)
-print(tri)
+# Remove triangles that are outside the track
+simplices = list(tri.simplices)
+for simplex in simplices:
+    if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
+        simplices.remove(simplex)
+        
 # Plotting the oriented car, with the right orientation(Yaw) and FOV
 plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
 plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw', scale=15)
@@ -166,7 +172,7 @@ plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
 
 # Plotting the Delaunay triangulation
 x_cone, y_cone = zip(*cone_coordinates)
-plt.triplot(x_cone, y_cone, tri.simplices, color='red', label='Delaunay Triangulation')
+plt.triplot(x_cone, y_cone, simplices, color='red', label='Delaunay Triangulation')
 
 # Show the plot
 plt.legend()
