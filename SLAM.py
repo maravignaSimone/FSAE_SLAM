@@ -93,18 +93,8 @@ print("The SLAM algorithm has finished.")
 x_inner, y_inner = zip(*seenInnerCones)
 x_outer, y_outer = zip(*seenOuterCones)
 
-# Create a list of all cone coordinates
-#cone_coordinates has to alternate between inner and outer cones (inner, outer, inner, outer, ...)
-cone_coordinates = [x for y in zip(seenInnerCones, seenOuterCones) for x in y]
-print(cone_coordinates)
-# Perform Delaunay triangulation
-tri = Delaunay(cone_coordinates)
-# Remove triangles that are outside the track
-simplices = list(tri.simplices)
-for simplex in simplices:
-    if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
-        simplices.remove(simplex)
-        
+simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)
+
 # Plotting the oriented car, with the right orientation(Yaw) and FOV
 plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
 plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw', scale=15)

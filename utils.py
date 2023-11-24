@@ -6,7 +6,7 @@
 # Libraries
 # ----------------------------- #
 import math
-
+from scipy.spatial import Delaunay
 # ----------------------------- #
 # Defining helper functions    #
 # ----------------------------- #
@@ -60,3 +60,21 @@ def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
     """
     This function find the path at the center of the road (between inner and outer cones).
     """
+
+def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
+    """
+    This function returns the simplices of the delaunay triangulation of the cones.
+    """
+    # Create a list of all cone coordinates
+    #cone_coordinates has to alternate between inner and outer cones (inner, outer, inner, outer, ...)
+    cone_coordinates = [x for y in zip(seenInnerCones, seenOuterCones) for x in y]
+    print(cone_coordinates)
+    # Perform Delaunay triangulation
+    tri = Delaunay(cone_coordinates)
+    # Remove triangles that are outside the track
+    simplices = list(tri.simplices)
+    for simplex in simplices:
+        if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
+            simplices.remove(simplex)
+    return simplices, cone_coordinates
+            
