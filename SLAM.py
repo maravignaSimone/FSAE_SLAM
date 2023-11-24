@@ -2,27 +2,26 @@
 # Project: SLAM in Formula Student
 
 # ----------------------------- #
-# Importing the needed modules #
+# Libraries
 # ----------------------------- #
 import matplotlib.pyplot as plt
-import math
-import numpy as np
 from scipy.spatial import Delaunay
+from utils import *
 
 # ----------------------------- #
-# Defining global variables    #
+# Defining global variables
 # ----------------------------- #
-startingConeRadius = 0.202 # measures in meters the radius of the starting cone
-coneRadius = 0.162 # measures in meters the radius of the cones
+startingConeRadius = 0.202 # measure of the starting cone radius in meters
+coneRadius = 0.162 # measure of the cone radius in meters
 
 carStartingPosition = (-6, 3) # coordinates of the starting position of the car
 startingCone = [(0,1), (0,5)] # coordinates of the starting cone
 
-fovAngle = 2*math.pi/3 # measures in radian the FOV
-fovDistance = 10 # measures in meters the FOV
+fovAngle = 2*math.pi/3 # FOV measured in radian
+fovDistance = 10 # FOV distance measured in meters 
 
 carEgoPosition = carStartingPosition # coordinates of the car
-carEgoYaw = 0 # radian wrt x axis
+carEgoYaw = 0 # yaw angle wrt x axis in radians
 
 # coordinates of the cones
 innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,5), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
@@ -32,62 +31,9 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,1), (11,1), (14,1), (17,1), (20,1)
 seenInnerCones = []
 seenOuterCones = []
 seenStartingCone = []
-# ----------------------------- #
-# Defining helper functions    #
-# ----------------------------- #
-def distanceBetweenPoints(point1, point2):
-    """
-    This function returns the distance between two points.
-    """
-    # calculating the distance between the two points
-    distance = ((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2)**0.5
-    return distance
-
-def angleBetweenPoints(point1, point2):
-    """
-    This function returns the angle between two points.
-    """
-    # calculating the angle between the two points
-    angle = math.atan2(point2[1] - point1[1], point2[0] - point1[0])
-    return angle
-
-def isInFov(carPosition, carYaw, conePosition, coneRadius):
-    """
-    This function returns True if the cone is in the FOV of the car, False otherwise.
-    """
-    # calculating the distance between the car and the cone
-    distance = distanceBetweenPoints(carPosition, conePosition) + coneRadius
-    maxAngle = carYaw + fovAngle/2
-    minAngle = carYaw - fovAngle/2
-
-    angle = angleBetweenPoints(carPosition, conePosition)
-    #check if the cone is in the FOV of the car (distance smaller than the FOV distance and angle between the max and min angle)
-    if distance <= fovDistance and angle <= maxAngle and angle >= minAngle:
-        return True
-    else:
-        return False
-
-def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone):
-    """
-    This function returns the list of cones that are in the FOV of the car.
-    """
-    for cone in innerCones:
-        if isInFov(carPosition, carYaw, cone, coneRadius):
-            seenInnerCones.append(cone)
-    for cone in outerCones:
-        if isInFov(carPosition, carYaw, cone, coneRadius):
-            seenOuterCones.append(cone)
-    for cone in startingCone:
-        if isInFov(carPosition, carYaw, cone, startingConeRadius):
-            seenStartingCone.append(cone)
-
-def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
-    """
-    This function find the path at the center of the road (between inner and outer cones).
-    """
 
 # ----------------------------- #
-# main part  #
+# Main function
 # ----------------------------- #
 
 # ----------------------------- #
@@ -120,8 +66,8 @@ print("Starting the SLAM algorithm...")
 #checking the fov function
 print("Checking the isInFov function...")
 print("Is the starting cone in the FOV of the car?")
-print(isInFov(carEgoPosition, carEgoYaw, startingCone[0], startingConeRadius))
-seenCones(carEgoPosition, carEgoYaw, innerCone, outerCone, startingCone)
+print(isInFov(carEgoPosition, carEgoYaw, startingCone[0], startingConeRadius, fovAngle, fovDistance))
+seenCones(carEgoPosition, carEgoYaw, innerCone, outerCone, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance)
 print("The cones in the FOV of the car are:")
 print("Starting cone: ", seenStartingCone)
 print("Inner cones: ", seenInnerCones)
