@@ -2,27 +2,26 @@
 # Project: SLAM in Formula Student
 
 # ----------------------------- #
-# Importing the needed modules #
+# Libraries
 # ----------------------------- #
 import matplotlib.pyplot as plt
-import math
-import numpy as np
 from scipy.spatial import Delaunay
+from utils import *
 
 # ----------------------------- #
-# Defining global variables    #
+# Defining global variables
 # ----------------------------- #
-startingConeRadius = 0.202 # measures in meters the radius of the starting cone
-coneRadius = 0.162 # measures in meters the radius of the cones
+startingConeRadius = 0.202 # measure of the starting cone radius in meters
+coneRadius = 0.162 # measure of the cone radius in meters
 
 carStartingPosition = (3, 3) # coordinates of the starting position of the car
 startingCone = [(0,1), (0,5)] # coordinates of the starting cone
 
-fovAngle = 2*math.pi/3 # measures in radian the FOV
-fovDistance = 10 # measures in meters the FOV
+fovAngle = 2*math.pi/3 # FOV measured in radian
+fovDistance = 10 # FOV distance measured in meters 
 
 carEgoPosition = carStartingPosition # coordinates of the car
-carEgoYaw = 0 # radian wrt x axis
+carEgoYaw = 0 # yaw angle wrt x axis in radians
 
 # coordinates of the cones
 innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
@@ -88,7 +87,7 @@ def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
     """
 
 # ----------------------------- #
-# main part  #
+# Main function
 # ----------------------------- #
 
 # ----------------------------- #
@@ -121,8 +120,8 @@ print("Starting the SLAM algorithm...")
 #checking the fov function
 print("Checking the isInFov function...")
 print("Is the starting cone in the FOV of the car?")
-print(isInFov(carEgoPosition, carEgoYaw, startingCone[0], startingConeRadius))
-seenCones(carEgoPosition, carEgoYaw, innerCone, outerCone, startingCone)
+print(isInFov(carEgoPosition, carEgoYaw, startingCone[0], startingConeRadius, fovAngle, fovDistance))
+seenCones(carEgoPosition, carEgoYaw, innerCone, outerCone, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance)
 print("The cones in the FOV of the car are:")
 print("Starting cone: ", seenStartingCone)
 print("Inner cones: ", seenInnerCones)
