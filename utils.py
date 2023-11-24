@@ -77,4 +77,3 @@ def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
         if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
             simplices.remove(simplex)
     return simplices, cone_coordinates
-            
