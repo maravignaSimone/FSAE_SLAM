@@ -5,9 +5,9 @@
 # Libraries
 # ----------------------------- #
 import matplotlib.pyplot as plt
-from scipy.spatial import Delaunay
 from utils import *
-
+from scipy.interpolate import make_interp_spline
+import numpy as np
 # ----------------------------- #
 # Defining global variables
 # ----------------------------- #
@@ -32,6 +32,8 @@ seenOuterCones = []
 seenStartingCone = []
 # list of the points of the trajectory
 trajectoryPoints = []
+
+
 
 # ----------------------------- #
 # Main function
@@ -94,6 +96,16 @@ x_inner, y_inner = zip(*seenInnerCones)
 x_outer, y_outer = zip(*seenOuterCones)
 
 simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)
+midPoints = findTriangulationMidPoints(simplices, cone_coordinates)
+midPoints = sorted(midPoints, key=lambda x: x[0])
+x_mid = [x[0] for x in midPoints]
+y_mid = [x[1] for x in midPoints]
+spline = make_interp_spline(x_mid, y_mid, k=3, )
+
+xnew = np.linspace(min(x_mid), max(x_mid), 20)
+ynew = spline(xnew)
+
+
 
 # Plotting the oriented car, with the right orientation(Yaw) and FOV
 plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
@@ -109,6 +121,11 @@ plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
 # Plotting the Delaunay triangulation
 x_cone, y_cone = zip(*cone_coordinates)
 plt.triplot(x_cone, y_cone, simplices, color='red', label='Delaunay Triangulation')
+
+# Plotting the midpoints
+x_mid, y_mid = zip(*midPoints)
+plt.scatter(x_mid, y_mid, color='black', label='Midpoints')
+plt.plot(xnew, ynew, color='black', label='Center Line')
 
 # Show the plot
 plt.legend()

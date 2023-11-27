@@ -7,6 +7,7 @@
 # ----------------------------- #
 import math
 from scipy.spatial import Delaunay
+
 # ----------------------------- #
 # Defining helper functions    #
 # ----------------------------- #
@@ -68,7 +69,6 @@ def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
     # Create a list of all cone coordinates
     #cone_coordinates has to alternate between inner and outer cones (inner, outer, inner, outer, ...)
     cone_coordinates = [x for y in zip(seenInnerCones, seenOuterCones) for x in y]
-    print(cone_coordinates)
     # Perform Delaunay triangulation
     tri = Delaunay(cone_coordinates)
     # Remove triangles that are outside the track
@@ -77,3 +77,40 @@ def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
         if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
             simplices.remove(simplex)
     return simplices, cone_coordinates
+
+def findMidPoint(point1, point2):
+    """
+    This function returns the midpoint between two points.
+    """
+    # calculating the midpoint between the two points
+    midPoint = ((point1[0]+point2[0])/2, (point1[1]+point2[1])/2)
+    return midPoint
+
+def oddEvenPoints(triangle):
+    """ 
+    This function returns the list of the points of the triangle that have different parity.
+    """
+    points = []
+    if (triangle[1] % 2 == 0 and triangle[2] % 2 != 0) or (triangle[1] % 2 != 0 and triangle[2] % 2 == 0):
+        points.append(tuple([triangle[1], triangle[2]]))
+    if (triangle[0] % 2 == 0 and triangle[1] % 2 != 0) or (triangle[0] % 2 != 0 and triangle[1] % 2 == 0):
+        points.append(tuple([triangle[0], triangle[1]]))
+    if (triangle[0] % 2 == 0 and triangle[2] % 2 != 0) or (triangle[0] % 2 != 0 and triangle[2] % 2 == 0):
+        points.append(tuple([triangle[0], triangle[2]]))
+    return points
+
+def findTriangulationMidPoints(simplices, cone_coordinates):
+    """
+    This function returns the list of the mid points of the triangles of the triangulation.
+    """
+    midPoints = set()
+    for triangle in simplices:
+        #find the points of the triangle that have different parity
+        points = oddEvenPoints(triangle)
+        for point in points:
+            midPoints.add(findMidPoint(cone_coordinates[point[0]], cone_coordinates[point[1]]))
+    return midPoints
+
+
+    
+    
