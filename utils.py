@@ -7,7 +7,7 @@
 # ----------------------------- #
 import math
 from scipy.spatial import Delaunay
-
+import numpy as np
 # ----------------------------- #
 # Defining helper functions    #
 # ----------------------------- #
@@ -43,19 +43,28 @@ def isInFov(carPosition, carYaw, conePosition, coneRadius, fovAngle, fovDistance
     else:
         return False
 
-def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance):
+def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance, transformation_matrix):
     """
     This function returns the list of cones that are in the FOV of the car.
     """
     for cone in innerCones:
         if isInFov(carPosition, carYaw, cone, coneRadius, fovAngle, fovDistance):
-            seenInnerCones.append(cone)
+            cone = cone + (1,)
+            coneCRF = np.dot(transformation_matrix, cone).T
+            coneCRF = coneCRF[:-1]
+            seenInnerCones.append(coneCRF)
     for cone in outerCones:
         if isInFov(carPosition, carYaw, cone, coneRadius, fovAngle, fovDistance):
-            seenOuterCones.append(cone)
+            cone = cone + (1,)
+            coneCRF = np.dot(transformation_matrix, cone).T
+            coneCRF = coneCRF[:-1]
+            seenOuterCones.append(coneCRF)
     for cone in startingCone:
         if isInFov(carPosition, carYaw, cone, startingConeRadius, fovAngle, fovDistance):
-            seenStartingCone.append(cone)
+            cone = cone + (1,)
+            coneCRF = np.dot(transformation_matrix, cone).T
+            coneCRF = coneCRF[:-1]
+            seenStartingCone.append(coneCRF)
 
 def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
     """
@@ -72,10 +81,12 @@ def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
     # Perform Delaunay triangulation
     tri = Delaunay(cone_coordinates)
     # Remove triangles that are outside the track
-    simplices = list(tri.simplices)
-    for simplex in simplices:
+    simplices = tri.simplices
+    print("Simplices: ", simplices)
+    for n, simplex in enumerate(simplices):
         if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
-            simplices.remove(simplex)
+            print("Removing triangle: ", simplex)
+            simplices = np.delete(simplices, n, 0)
     return simplices, cone_coordinates
 
 def findMidPoint(point1, point2):
