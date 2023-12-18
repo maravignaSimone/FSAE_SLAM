@@ -82,12 +82,11 @@ def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
     tri = Delaunay(cone_coordinates)
     # Remove triangles that are outside the track
     simplices = tri.simplices
-    print("Simplices: ", simplices)
+    simplices_to_save = []
     for n, simplex in enumerate(simplices):
-        if (simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0):
-            print("Removing triangle: ", simplex)
-            simplices = np.delete(simplices, n, 0)
-    return simplices, cone_coordinates
+        if not((simplex[0] % 2 == 0 and simplex[1] % 2 == 0 and simplex[2] % 2 == 0) or (simplex[0] % 2 != 0 and simplex[1] % 2 != 0 and simplex[2] % 2 != 0)):
+            simplices_to_save.append(simplex)
+    return simplices_to_save, cone_coordinates
 
 def findMidPoint(point1, point2):
     """

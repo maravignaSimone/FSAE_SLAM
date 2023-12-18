@@ -9,6 +9,7 @@ from utils import *
 from scipy.interpolate import make_interp_spline
 import numpy as np
 from scipy import interpolate
+
 # ----------------------------- #
 # Defining global variables
 # ----------------------------- #
@@ -19,19 +20,25 @@ carStartingPosition = (3, 3) # coordinates of the starting position of the car
 startingCone = [(0,1), (0,5)] # coordinates of the starting cone
 
 fovAngle = 2*math.pi/3 # FOV measured in radian
-fovDistance = 10 # FOV distance measured in meters 
+fovDistance = 15 # FOV distance measured in meters 
 
 carEgoPosition = carStartingPosition # coordinates of the car
 carEgoYaw = -np.pi/12# yaw angle wrt x axis in radians
+
+# transformation matrix from CRF to FRF TODO:implement the update of the matrix and put in the utils
 transformation_matrix = np.array([
     [np.cos(carEgoYaw), -np.sin(carEgoYaw), carEgoPosition[0]],
     [np.sin(carEgoYaw), np.cos(carEgoYaw), carEgoPosition[1]],
     [0, 0, 1]
 ])
 inverse_transformation_matrix = np.linalg.inv(transformation_matrix)
-# coordinates of the cones
-innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
-outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)]
+
+# coordinates of the cones in the WRF
+""" innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
+outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)] """
+innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,1), (11,-4), (8,-7), (5,-8), (20,5), (23,5), (26,5), (29,5)]
+outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4), (20,1), (23,1), (26,1), (29,1)]
+
 # lists of the cones that are in the FOV of the car
 seenInnerCones = []
 seenOuterCones = []
@@ -40,13 +47,12 @@ seenStartingCone = []
 trajectoryPoints = []
 
 
-
 # ----------------------------- #
 # Main function
 # ----------------------------- #
 
 # ----------------------------- #
-# Plotting the map             #
+# Plotting the map WRF            #
 # ----------------------------- #
 # creating the lists of x and y coordinates for the cones
 x_inner, y_inner = zip(*innerCone)
@@ -70,7 +76,12 @@ plt.ylabel('Y')
 plt.title('Map of the track')
 plt.legend()
 plt.show()
+
 # ----------------------------- #
+# Plotting the map CRF            #
+# ----------------------------- #
+
+# Plotting the map of what tha car sees in CRF
 seenCones(carEgoPosition, carEgoYaw, innerCone, outerCone, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance, inverse_transformation_matrix)
 print("The cones in the FOV of the car are:")
 print("Starting cone: ", seenStartingCone)
@@ -92,15 +103,18 @@ plt.legend()
 plt.title('Seen cones in CRF')
 plt.show()
 
+# ----------------------------- #
+# Computing triangulation and trajectory #
+# ----------------------------- #
 
 # creating the lists of x and y coordinates for the cones
 x_inner, y_inner = zip(*seenInnerCones)
 x_outer, y_outer = zip(*seenOuterCones)
 
+# computing the triangulation
 simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)
 midPoints = findTriangulationMidPoints(simplices, cone_coordinates)
-print("Mid", midPoints)
-midPoints = sorted(midPoints, key=lambda x: x[0])
+midPoints = sorted(midPoints, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
 x_mid = [x[0] for x in midPoints]
 y_mid = [x[1] for x in midPoints]
 phi = np.linspace(0, 2*np.pi, midPoints.__len__())
@@ -108,8 +122,7 @@ spl = make_interp_spline(phi, np.c_[x_mid, y_mid], k=2)
 phi_new = np.linspace(0, 2*np.pi, 100)
 x_new, y_new = spl(phi_new).T
 
-
-
+# Plotting the map of what tha car sees in CRF and the triangulation and the trajectory
 # Plotting the oriented car, with the right orientation(Yaw) and FOV
 plt.scatter(0, 0, color='green', label='Car')
 plt.quiver(0, 0, math.cos(0), math.sin(0), color='green', label='Yaw', scale=15)
