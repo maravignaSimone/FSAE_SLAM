@@ -9,6 +9,7 @@ from utils import *
 from scipy.interpolate import make_interp_spline
 import numpy as np
 from scipy import interpolate
+from bicycle_model import BicycleModel
 
 # ----------------------------- #
 # Defining global variables
@@ -23,7 +24,7 @@ fovAngle = 2*math.pi/3 # FOV measured in radian
 fovDistance = 15 # FOV distance measured in meters 
 
 carEgoPosition = carStartingPosition # coordinates of the car
-carEgoYaw = -np.pi/12# yaw angle wrt x axis in radians
+carEgoYaw = 0# yaw angle wrt x axis in radians
 
 # transformation matrix from CRF to FRF TODO:implement the update of the matrix and put in the utils
 transformation_matrix = np.array([
@@ -34,10 +35,30 @@ transformation_matrix = np.array([
 inverse_transformation_matrix = np.linalg.inv(transformation_matrix)
 
 # coordinates of the cones in the WRF
-""" innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
-outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)] """
-innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,1), (11,-4), (8,-7), (5,-8), (20,5), (23,5), (26,5), (29,5)]
-outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4), (20,1), (23,1), (26,1), (29,1)]
+#rettilineo con chichane
+innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,5), (14,5), (17,5), (20,5), (23,5), (26,5), (29,5)]
+outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1), (23,1), (26,1), (29,1)] 
+#tornante
+""" innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,1), (11,-4), (8,-7), (5,-8), (5,-4), (-5,1), (2,-8), (-2,-8),  (-5,-8)]
+outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,-4), (-2,-4), (-5,-4)] """
+#circuito chiuso
+# concentric circles with a distance of 4 meters
+""" innerCone = []
+outerCone = []
+
+num_circles = 2  # number of concentric circles
+radius_increment = 4  # distance between concentric circles
+
+for i in range(1, num_circles + 1):
+    radius = i * radius_increment
+    theta = np.linspace(0, 2 * np.pi, 20)
+    x = radius * np.cos(theta)
+    y = radius * np.sin(theta)
+    if(i%2 == 1):
+        innerCone.extend(list(zip(x, y)))
+    else:
+        outerCone.extend(list(zip(x, y)))
+print(innerCone, outerCone) """
 
 # lists of the cones that are in the FOV of the car
 seenInnerCones = []
@@ -119,7 +140,7 @@ x_mid = [x[0] for x in midPoints]
 y_mid = [x[1] for x in midPoints]
 phi = np.linspace(0, 2*np.pi, midPoints.__len__())
 spl = make_interp_spline(phi, np.c_[x_mid, y_mid], k=2)
-phi_new = np.linspace(0, 2*np.pi, 100)
+phi_new = np.linspace(0, 2*np.pi, 300)
 x_new, y_new = spl(phi_new).T
 
 # Plotting the map of what tha car sees in CRF and the triangulation and the trajectory
@@ -146,3 +167,14 @@ plt.axis('equal')
 # Show the plot
 plt.legend()
 plt.show()
+
+
+# ----------------------------- #
+# Computing the trajectory #
+# ----------------------------- #
+#compute the curvature between the ego car and the first midpoint
+car = BicycleModel()
+velocity = 10
+curvature = 0
+carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, velocity, curvature)
+print("The car is in position: ", carEgoPosition, " with yaw: ", carEgoYaw)

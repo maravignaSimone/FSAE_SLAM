@@ -11,4 +11,4 @@ class BicycleModel:
         new_y = y + self.delta_time * velocity * sin(yaw)
         new_yaw = yaw + self.delta_time * velocity * curvature
 
-        return new_x, new_y, new_yaw
+        return (new_x, new_y), new_yaw
