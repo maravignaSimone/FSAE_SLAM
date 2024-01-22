@@ -79,7 +79,7 @@ def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
     #cone_coordinates has to alternate between inner and outer cones (inner, outer, inner, outer, ...)
     cone_coordinates = [x for y in zip(seenInnerCones, seenOuterCones) for x in y]
     # Perform Delaunay triangulation
-    tri = Delaunay(cone_coordinates)
+    tri = Delaunay(cone_coordinates, qhull_options="QJ Qa Qs")
     # Remove triangles that are outside the track
     simplices = tri.simplices
     simplices_to_save = []
@@ -121,6 +121,14 @@ def findTriangulationMidPoints(simplices, cone_coordinates):
             midPoints.add(findMidPoint(cone_coordinates[point[0]], cone_coordinates[point[1]]))
     return midPoints
 
-
+def computeTransformationMatrixes(carEgoPosition, carEgoYaw):
+    """
+    This function returns the transformation matrix from the car reference frame to the world reference frame.
+    """
+    transformation_matrix = np.array([[math.cos(carEgoYaw), -math.sin(carEgoYaw), carEgoPosition[0]],
+                                      [math.sin(carEgoYaw), math.cos(carEgoYaw), carEgoPosition[1]],
+                                      [0, 0, 1]])
+    inverse_transformation_matrix = np.linalg.inv(transformation_matrix)
+    return transformation_matrix, inverse_transformation_matrix
     
     
