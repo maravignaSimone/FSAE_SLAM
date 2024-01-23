@@ -46,7 +46,11 @@ trajectoryPoints = []
 # ----------------------------- #
 # Main function
 # ----------------------------- #
-for t in range(0, 5000):
+isStartSeen = False #TODO: implementare il fermarsi dopo gli starting cone
+isStartSeeing = False
+while True:
+    if isStartSeeing and isStartSeen:
+        break
     trajectoryPoints.append(carEgoPosition)
     # lists of the cones that are in the FOV of the car
     seenInnerCones = []
@@ -92,8 +96,13 @@ for t in range(0, 5000):
     plt.subplot(1, 2, 2)
     #plotting the seen cones
     if len(seenStartingCone) > 0:
+        isStartSeeing = True
         x_seenStarting, y_seenStarting = zip(*seenStartingCone)
         plt.scatter(x_seenStarting, y_seenStarting, color='orange', label='Seen Starting Cones')
+    else:
+        if isStartSeeing:
+            isStartSeen = True
+            isStartSeeing = False
     if len(seenInnerCones) > 0:
         x_seenInner, y_seenInner = zip(*seenInnerCones)
         plt.scatter(x_seenInner, y_seenInner, color='yellow', label='Seen Inner Cones')
@@ -137,3 +146,4 @@ for t in range(0, 5000):
     print("The curvature is: ", curvature)
     carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, carEgoVelocity, curvature)
     print("The car is in position: ", carEgoPosition, " with yaw: ", carEgoYaw)
+print("Fine giro")
