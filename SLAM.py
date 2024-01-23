@@ -10,30 +10,25 @@ from scipy.interpolate import make_interp_spline
 import numpy as np
 from scipy import interpolate
 from bicycle_model import BicycleModel
-import matplotlib.patches as patches
 # ----------------------------- #
 # Defining global variables
 # ----------------------------- #
 startingConeRadius = 0.202 # measure of the starting cone radius in meters
 coneRadius = 0.162 # measure of the cone radius in meters
 
-carStartingPosition = (-38,13)#(0,45)#(3, 3) # coordinates of the starting position of the car
-startingCone = [(0,1), (0,5)] # coordinates of the starting cone
+carStartingPosition = (-38,0)#(0,45)#(3, 3) # coordinates of the starting position of the car
+startingCone = [(-40.5,13), (-35.5,13)] # coordinates of the starting cone
 
-fovAngle = 2*math.pi/3 # FOV measured in radian
+fovAngle = 2*(math.pi/3) # FOV measured in radian
 fovDistance = 15 # FOV distance measured in meters 
 
 carEgoPosition = carStartingPosition # coordinates of the car
-carEgoYaw = -np.pi/2# yaw angle wrt x axis in radians
-
-""" # transformation matrix from CRF to FRF TODO:implement the update of the matrix and put in the utils
-transformation_matrix = np.array([
-    [np.cos(carEgoYaw), -np.sin(carEgoYaw), carEgoPosition[0]],
-    [np.sin(carEgoYaw), np.cos(carEgoYaw), carEgoPosition[1]],
-    [0, 0, 1]
-])
-inverse_transformation_matrix = np.linalg.inv(transformation_matrix) """
-
+carEgoYaw = np.pi/2# yaw angle wrt x axis in radians
+carEgoVelocity = 20 # velocity of the car in m/s
+carEgoCurvature = 0 # curvature of the car
+car = BicycleModel()
+Kdd = 0.25
+l_d = Kdd * carEgoVelocity
 # coordinates of the cones in the WRF
 # circuito prova
 innerCone = [(6.49447171658257, 41.7389113024907), (8.49189149682204, 41.8037451937836), (10.4848751821667, 41.8690573815958), (12.473517040832, 41.9319164105607), (14.4579005366844, 41.9894100214277), (16.4380855350346, 42.0386448286094), (22.3534294484539, 42.1081444836209), (24.3165071700586, 42.0957886616701), (26.2748937812757, 42.0609961552005), (28.2282468521326, 42.0009961057027), (30.1761149294924, 41.9130441723441), (32.0795946202318, 41.7896079706255), (33.88171993278, 41.5914171121172), (37.1238045770298, 40.8042280456036), (38.5108000329817, 40.1631834270328), (40.7498148915033, 38.2980872410971), (41.6428012725483, 37.057274095852), (42.3684952713925, 35.6541128117207), (42.923741279885, 34.1220862330776), (43.4562377484922, 30.9418382209873), (43.4041825643156, 29.3682424552239), (43.1310900802234, 27.8454335309325), (42.6373380962399, 26.4081334491868), (41.92136068956, 25.0723633391567), (39.8493389129556, 22.6733478226331), (37.1330772214184, 20.7325660900255), (35.6438750732877, 19.9947555768891), (34.097019809549, 19.4366654165469), (32.5117013027651, 19.0709696852617), (30.9105163807122, 18.908114245835), (29.305019764528, 18.9545691109581), (27.6851829730976, 19.2045278218877), (24.4759113345748, 20.2570787967781), (21.3685688158133, 21.9377743574784), (19.8072187451783, 22.9775182612717), (18.2040616100214, 24.1054677217171), (16.5291821840059, 25.277806927272), (14.7490275765791, 26.4446189166734), (10.7566166245341, 28.5122919557571), (8.59035703212379, 29.2671114310357), (6.36970146209175, 29.8034933598624), (4.11753580708921, 30.1252372241127), (-0.405973075502234, 30.1500578730274), (-2.75740378439869, 29.8083496207198), (-7.53032772904185, 27.7630095130657), (-9.55882345130782, 25.8360602858122), (-10.9967405848897, 23.4446538263345), (-11.7530941810305, 20.7728147412547), (-11.7945553145768, 18.0098876247875), (-11.1377067999357, 15.3398589997259), (-9.84329815385971, 12.9293912425976), (-4.31864858110937, 8.32717777382664), (-2.64821833398598, 7.33684919790624), (-1.23396167898668, 6.38669110355496), (-0.139159724307982, 5.41310565569044), (0.583196113153409, 4.42232005043196), (1.00846697640521, 3.25999992647677), (1.42452204766312, -0.235409796458984), (1.7076976610908, -2.501572642794), (2.43395748729283, -5.02746251429141), (5.90118769712182, -9.36241405660719), (8.13219227914984, -10.6723062142501), (10.4108490166236, -11.5249176387577), (14.7174578544944, -12.4162331505645), (16.6611999625517, -12.7135418322201), (18.4669199253036, -13.0527675263258), (20.2513584750154, -13.4902268953088), (22.0275043214267, -14.0208096878619), (23.7938485314227, -14.6351269687361), (29.038055353384, -16.8864873288738), (30.7681622622371, -17.739262619614), (32.3760783979903, -18.6039808584518), (33.7897740653103, -19.5166383512928), (34.9667330396653, -20.5090458088496), (35.8614855279756, -21.5808775016001), (36.4612858521334, -22.745130864389), (36.8711477182864, -25.4557910211687), (36.6696611457761, -26.8930663715963), (35.5175477601575, -29.6867414698392), (34.6369025552692, -30.9011171932826), (33.5888282300982, -31.9233335254203), (32.4026659456202, -32.7184009884738), (29.6211021726631, -33.5886007841515), (27.9849204584717, -33.717019313626), (26.2183096377485, -33.68480226464), (24.3309596262912, -33.5465676173721), (22.3208062313579, -33.3726612899257), (18.1328018280879, -33.1964401661521), (14.1429922166079, -33.1731958647648), (12.2313503871593, -33.1266878316603), (10.3778348140314, -33.0132052855498), (8.58829435522285, -32.8040580663346), (6.84064584789227, -32.4725374962639), (5.0700994448255, -32.0172508962124), (3.27322533222869, -31.4640545504384), (-0.418687595522242, -30.179669644723), (-4.09627739578414, -28.8238238024923), (-5.8920216078647, -28.1122858460715), (-7.65255868890126, -27.3645667343373), (-9.3735582672942, -26.570622321206), (-11.077254916009, -25.7164049091686), (-14.4775165017317, -23.8562440887552), (-16.185233511045, -22.8738429891042), (-17.906698460143, -21.8724503885825), (-19.628089973309, -20.8717543910881), (-22.928385262226, -18.8697018891971), (-24.4790807692059, -17.8277052050408), (-27.3051265922114, -15.5801090683244), (-28.5448479313762, -14.3530174024786), (-29.6530218737847, -13.0404842531107), (-30.6444406510768, -11.6234683085559), (-31.5169602294234, -10.1146356600596), (-32.2692264908853, -8.52739205631154), (-32.9016624434539, -6.87420998418598), (-34.1160057737752, -1.6080377618219), (-34.3261608207142, 0.237322459171913), (-34.4624174228984, 2.11880932640591), (-34.5407037273032, 4.03273612643633), (-34.5779532171168, 5.97700580252438), (-34.5920061096721, 7.95066706685753), (-34.6203010935088, 11.9628384547546), (-34.6463516562825, 13.9656473217268), (-34.6751545298116, 15.9616504117489), (-34.7230350194217, 19.933473343198), (-34.7332354577762, 21.9093507078716), (-34.728433845112, 23.8784778261844), (-34.6466389854161, 27.7320065787716), (-34.4887912178893, 29.4532110956616), (-34.1674004338218, 30.9833511541837), (-33.6523388115164, 32.2835000565933), (-32.9540435069214, 33.3001054449054), (-32.0153881487289, 34.0792118997941), (-28.7867224485036, 35.7027232116937), (-26.87370749476, 36.7067299514829), (-21.7623826032159, 39.595866321033), (-20.1418625665089, 40.3549987041733), (-18.5286281071084, 40.9596629960629), (-16.9269162480936, 41.3805845888608), (-15.2947586791386, 41.6060043323431), (-13.5312107482484, 41.6777684016896), (-9.64289482747188, 41.5853268011948), (-7.61112976471737, 41.5421552074769), (-5.58318659783131, 41.5226049040385), (-1.53976115651896, 41.5427010208205), (0.4754310943428, 41.5765527022834), (2.48619653317858, 41.622438779726), (6.49447171658257, 41.7389113024907), (8.49189149682204, 41.8037451937836), (10.4848751821667, 41.8690573815958), (12.473517040832, 41.9319164105607), (14.4579005366844, 41.9894100214277)]
@@ -44,34 +39,15 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1
 #tornante
 """ innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,1), (11,-4), (8,-7), (5,-8), (5,-4), (-5,1), (2,-8), (-2,-8),  (-5,-8)]
 outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,-4), (-2,-4), (-5,-4)] """
-#circuito chiuso
-# concentric circles with a distance of 4 meters
-""" innerCone = []
-outerCone = []
-
-num_circles = 2  # number of concentric circles
-radius_increment = 4  # distance between concentric circles
-
-for i in range(1, num_circles + 1):
-    radius = i * radius_increment
-    theta = np.linspace(0, 2 * np.pi, 20)
-    x = radius * np.cos(theta)
-    y = radius * np.sin(theta)
-    if(i%2 == 1):
-        innerCone.extend(list(zip(x, y)))
-    else:
-        outerCone.extend(list(zip(x, y)))
-print(innerCone, outerCone) """
-
 
 # list of the points of the trajectory
 trajectoryPoints = []
 
-
 # ----------------------------- #
 # Main function
 # ----------------------------- #
-for t in range(0, 500):
+for t in range(0, 5000):
+    trajectoryPoints.append(carEgoPosition)
     # lists of the cones that are in the FOV of the car
     seenInnerCones = []
     seenOuterCones = []
@@ -125,21 +101,10 @@ for t in range(0, 500):
         x_seenOuter, y_seenOuter = zip(*seenOuterCones)
         plt.scatter(x_seenOuter, y_seenOuter, color='blue', label='Seen Outer Cones')
     plt.scatter(0, 0, color='green', label='Car')
-    plt.axis('equal')
-    plt.legend()
-    plt.title('Seen cones in CRF')
-    plt.show()
-
     # ----------------------------- #
-    # Computing triangulation and trajectory #
+    # Computing triangulation#
     # ----------------------------- #
-
-    # creating the lists of x and y coordinates for the cones
-    x_inner, y_inner = zip(*seenInnerCones)
-    x_outer, y_outer = zip(*seenOuterCones)
-
-    # computing the triangulation
-    simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)
+    simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)   
     midPoints = findTriangulationMidPoints(simplices, cone_coordinates)
     midPoints = sorted(midPoints, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
     x_mid = [x[0] for x in midPoints]
@@ -148,41 +113,18 @@ for t in range(0, 500):
     spl = make_interp_spline(phi, np.c_[x_mid, y_mid], k=2)
     phi_new = np.linspace(0, 2*np.pi, 300)
     x_new, y_new = spl(phi_new).T
-    """
-    # Plotting the map of what tha car sees in CRF and the triangulation and the trajectory
-    # Plotting the oriented car, with the right orientation(Yaw) and FOV
-    plt.scatter(0, 0, color='green', label='Car')
-    plt.quiver(0, 0, math.cos(0), math.sin(0), color='green', label='Yaw', scale=15)
-    plt.plot([0, fovDistance*math.cos(0+fovAngle/2)], [0, fovDistance*math.sin(0+fovAngle/2)], color='green', label = 'FOV')
-    plt.plot([0, fovDistance*math.cos(0-fovAngle/2)], [0, fovDistance*math.sin(0-fovAngle/2)], color='green')
-
-    # Plotting the cones
-    #plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
-    plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
-    plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
-
-    # Plotting the Delaunay triangulation
     x_cone, y_cone = zip(*cone_coordinates)
     plt.triplot(x_cone, y_cone, simplices, color='red', label='Delaunay Triangulation')
-
-    # Plotting the midpoints
-    x_mid, y_mid = zip(*midPoints)
-    plt.scatter(x_mid, y_mid, color='black', label='Midpoints')
     plt.plot(x_new, y_new, color='black', label='Center Line')
     plt.axis('equal')
-    # Show the plot
     plt.legend()
-    plt.show()"""
-
-
+    plt.title('Seen cones in CRF and ideal trajectory')
+    plt.show()
+    plt.pause(0.01)
+    plt.clf()
     # ----------------------------- #
     # Computing the trajectory #
     # ----------------------------- #
-    #compute the curvature between the ego car and the first midpoint
-    car = BicycleModel()
-    velocity = 30
-    Kdd = 0.25
-    l_d = Kdd * velocity
     #find the intersection between the circle of radius l_d and the line [x_new, y_new]
     for i in range(0, x_new.__len__()):
         if (x_new[i]**2 + y_new[i]**2) - l_d**2 < 0.3 and (x_new[i]**2 + y_new[i]**2) - l_d**2 > -0.3:
@@ -193,35 +135,5 @@ for t in range(0, 500):
     alpha = math.atan2(TP[1], TP[0])
     curvature = 2*math.sin(alpha)/l_d
     print("The curvature is: ", curvature)
-    carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, velocity, curvature)
+    carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, carEgoVelocity, curvature)
     print("The car is in position: ", carEgoPosition, " with yaw: ", carEgoYaw)
-    
-    # Plotting the map of what tha car sees in CRF and the triangulation and the trajectory
-    # Plotting the oriented car, with the right orientation(Yaw) and FOV
-    """
-    plt.scatter(0, 0, color='green', label='Car')
-    plt.quiver(0, 0, math.cos(0), math.sin(0), color='green', label='Yaw', scale=15)
-    plt.plot([0, fovDistance*math.cos(0+fovAngle/2)], [0, fovDistance*math.sin(0+fovAngle/2)], color='green', label = 'FOV')
-    plt.plot([0, fovDistance*math.cos(0-fovAngle/2)], [0, fovDistance*math.sin(0-fovAngle/2)], color='green')
-    # Plotting the cones
-    #plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
-    plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
-    plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
-    # Plotting the midpoints
-    x_mid, y_mid = zip(*midPoints)
-    plt.scatter(x_mid, y_mid, color='black', label='Midpoints')
-    plt.plot(x_new, y_new, color='black', label='Center Line')
-    #plot a circle
-    ax = plt.gca()
-    circle = patches.Circle((0, 0), l_d, edgecolor='green', facecolor='none', label='Circle')
-    ax.add_patch(circle)
-    ax.set_aspect('equal', 'box')
-    plt.axis('equal')
-    # Show the plot
-    plt.legend()
-    plt.show()"""
-    x_cone, y_cone = zip(*cone_coordinates)
-    plt.triplot(x_cone, y_cone, simplices, color='red', label='Delaunay Triangulation')
-    plt.plot(x_new, y_new, color='black', label='Center Line')
-    plt.pause(0.01)
-    plt.clf()

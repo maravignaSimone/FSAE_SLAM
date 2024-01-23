@@ -1,7 +1,7 @@
 from math import sin, cos
 
 class BicycleModel:
-    def __init__(self, delta_time = 0.01):
+    def __init__(self, delta_time = 0.1):
         self.delta_time = delta_time
 
     # update step: given the current state of the car, the velocity and the curvature, compute the new state

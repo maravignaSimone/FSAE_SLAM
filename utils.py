@@ -27,16 +27,33 @@ def angleBetweenPoints(point1, point2):
     angle = math.atan2(point2[1] - point1[1], point2[0] - point1[0])
     return angle
 
+def angleBetweenTwoVectors(vector1, vector2):
+    """
+    This function returns the angle between two vectors.
+    """
+    # calculating the angle between the two vectors
+    angle = math.acos(np.dot(vector1, vector2)/(np.linalg.norm(vector1)*np.linalg.norm(vector2)))
+    return angle
+def angleBetweenCarAndPoint(carPosition, carYaw, point):
+    """
+    This function returns the angle between the car and a point.
+    """
+    # calculating the angle between the car and the point
+    carVector = np.array([math.cos(carYaw), math.sin(carYaw)])
+    pointVector = np.array([point[0]-carPosition[0], point[1]-carPosition[1]])
+    angle = angleBetweenTwoVectors(carVector, pointVector)
+    return angle
+
 def isInFov(carPosition, carYaw, conePosition, coneRadius, fovAngle, fovDistance):
     """
     This function returns True if the cone is in the FOV of the car, False otherwise.
     """
     # calculating the distance between the car and the cone
     distance = distanceBetweenPoints(carPosition, conePosition) + coneRadius
-    maxAngle = carYaw + fovAngle/2
-    minAngle = carYaw - fovAngle/2
-
-    angle = angleBetweenPoints(carPosition, conePosition)
+    maxAngle = fovAngle/2
+    minAngle = -fovAngle/2
+    # calculating the angle between the car and the cone
+    angle = angleBetweenCarAndPoint(carPosition, carYaw, conePosition)
     #check if the cone is in the FOV of the car (distance smaller than the FOV distance and angle between the max and min angle)
     if distance <= fovDistance and angle <= maxAngle and angle >= minAngle:
         return True
