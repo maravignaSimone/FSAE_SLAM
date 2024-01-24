@@ -45,6 +45,37 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,
 trajectoryPoints = []
 trackMidPoints = OrderedSet()
 worldTrajectoryPoints = OrderedSet()
+innerConesSet = OrderedSet()
+outerConesSet = OrderedSet()
+startingConesSet = OrderedSet()
+# ----------------------------- #
+# Plotting the map WRF            #
+# ----------------------------- #
+# creating the lists of x and y coordinates for the cones
+x_inner, y_inner = zip(*innerCone)
+x_outer, y_outer = zip(*outerCone)
+x_starting, y_starting = zip(*startingCone)
+# Plotting the map of the track
+# Plotting the oriented car, with the right orientation(Yaw) anf FOV
+plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
+plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw', scale=15)
+plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green', label = 'FOV')
+plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
+
+# Plotting the cones
+plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
+plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
+plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
+
+plt.axis('equal')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Map of the track')
+plt.legend()
+plt.ion()
+plt.show()
+plt.waitforbuttonpress()
+
 # ----------------------------- #
 # Main function
 # ----------------------------- #
@@ -58,33 +89,7 @@ while True:
     seenInnerCones = []
     seenOuterCones = []
     seenStartingCone = []
-    # ----------------------------- #
-    # Plotting the map WRF            #
-    # ----------------------------- #
-    # creating the lists of x and y coordinates for the cones
-    x_inner, y_inner = zip(*innerCone)
-    x_outer, y_outer = zip(*outerCone)
-    x_starting, y_starting = zip(*startingCone)
-    plt.subplot(1, 2, 1)
-    # Plotting the oriented car, with the right orientation(Yaw) anf FOV
-    plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
-    plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw', scale=15)
-    plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green', label = 'FOV')
-    plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
-
-    # Plotting the cones
-    plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
-    plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
-    plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
-
-    plt.axis('equal')
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.title('Map of the track')
-    plt.legend()
-    plt.ion()
-    plt.show()
-
+    
     # ----------------------------- #
     # Plotting the map CRF            #
     # ----------------------------- #
@@ -95,6 +100,41 @@ while True:
     print("Starting cone: ", seenStartingCone)
     print("Inner cones: ", seenInnerCones)
     print("Outer cones: ", seenOuterCones)
+    plt.subplot(1, 2, 1)
+    #plotting the reconstructed map of the track in the WRF by applying the transformation matrix
+    seenInnerCones = sorted(seenInnerCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
+    for cone in seenInnerCones:
+        cone_homogeneous = np.array([cone[0], cone[1], 1])
+        cone_world = np.dot(transformation_matrix, cone_homogeneous)
+        cone_world = cone_world[:2]
+        innerConesSet.add((cone_world[0], cone_world[1]))
+    x_in, y_in = zip(*innerConesSet)
+    plt.scatter(x_in, y_in, color='yellow')
+    seenOuterCones = sorted(seenOuterCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
+    for cone in seenOuterCones:
+        cone_homogeneous = np.array([cone[0], cone[1], 1])
+        cone_world = np.dot(transformation_matrix, cone_homogeneous)
+        cone_world = cone_world[:2]
+        outerConesSet.add((cone_world[0], cone_world[1]))
+    x_out, y_out = zip(*outerConesSet)
+    plt.scatter(x_out, y_out, color='blue')
+    for cone in seenStartingCone:
+        cone_homogeneous = np.array([cone[0], cone[1], 1])
+        cone_world = np.dot(transformation_matrix, cone_homogeneous)
+        cone_world = cone_world[:2]
+        startingConesSet.add((cone_world[0], cone_world[1]))
+    x_start, y_start = zip(*startingConesSet)
+    plt.scatter(x_start, y_start, color='orange') 
+    # Plotting the oriented car, with the right orientation(Yaw) anf FOV
+    plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
+    plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', scale=15)
+    plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green')
+    plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
+    x_trajectory, y_trajectory = zip(*trajectoryPoints)
+    plt.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
+    plt.axis('equal')
+    plt.legend()
+    plt.title('Reconstructed map of the track in the WRF')
     plt.subplot(1, 2, 2)
     #plotting the seen cones
     if len(seenStartingCone) > 0:
@@ -170,18 +210,7 @@ plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
 plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
 x_m, y_m = zip(*trackMidPoints)
 #plt.scatter(x_m, y_m, color='black', label='Mid Points')
-x_w, y_w = zip(*worldTrajectoryPoints)
-x_mid = [x[0] for x in worldTrajectoryPoints]
-y_mid = [x[1] for x in worldTrajectoryPoints]
-phi = np.linspace(0, 2*np.pi, worldTrajectoryPoints.__len__())
-spl = make_interp_spline(phi, np.c_[x_mid, y_mid], k=2)
-phi_new = np.linspace(0, 2*np.pi, 300)
-x_new, y_new = spl(phi_new).T
-plt.plot(x_new, y_new, color='black', label='Center Line')
-#compute the interpolation between the points
 plt.axis('equal')
-plt.xlabel('X')
-plt.ylabel('Y')
 plt.title('Trajectory')
 plt.legend()
 plt.show()
