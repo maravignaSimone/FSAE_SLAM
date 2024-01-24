@@ -10,6 +10,7 @@ from scipy.interpolate import make_interp_spline
 import numpy as np
 from scipy import interpolate
 from bicycle_model import BicycleModel
+from ordered_set import OrderedSet
 # ----------------------------- #
 # Defining global variables
 # ----------------------------- #
@@ -42,7 +43,8 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,
 
 # list of the points of the trajectory
 trajectoryPoints = []
-
+trackMidPoints = OrderedSet()
+worldTrajectoryPoints = OrderedSet()
 # ----------------------------- #
 # Main function
 # ----------------------------- #
@@ -116,6 +118,12 @@ while True:
     simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)   
     midPoints = findTriangulationMidPoints(simplices, cone_coordinates)
     midPoints = sorted(midPoints, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
+    #putting the midpoints in the WRF and then in a set 
+    for point in midPoints:
+        point_homogeneous = np.array([point[0], point[1], 1])
+        point_world = np.dot(transformation_matrix, point_homogeneous)
+        point_world = point_world[:2]
+        trackMidPoints.add((point_world[0], point_world[1]))
     x_mid = [x[0] for x in midPoints]
     y_mid = [x[1] for x in midPoints]
     phi = np.linspace(0, 2*np.pi, midPoints.__len__())
@@ -125,6 +133,11 @@ while True:
     x_cone, y_cone = zip(*cone_coordinates)
     plt.triplot(x_cone, y_cone, simplices, color='red', label='Delaunay Triangulation')
     plt.plot(x_new, y_new, color='black', label='Center Line')
+    for p in range(0,30):
+        point_homogeneous = np.array([x_new[p], y_new[p], 1])
+        point_world = np.dot(transformation_matrix, point_homogeneous)
+        point_world = point_world[:2]
+        worldTrajectoryPoints.append((point_world[0], point_world[1]))
     plt.axis('equal')
     plt.legend()
     plt.title('Seen cones in CRF and ideal trajectory')
@@ -147,3 +160,30 @@ while True:
     carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, carEgoVelocity, curvature)
     print("The car is in position: ", carEgoPosition, " with yaw: ", carEgoYaw)
 print("Fine giro")
+print("The center line is: ", trackMidPoints)
+#plot the trajectory
+plt.clf()
+x_trajectory, y_trajectory = zip(*trajectoryPoints)
+plt.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
+plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
+plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
+plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
+x_m, y_m = zip(*trackMidPoints)
+#plt.scatter(x_m, y_m, color='black', label='Mid Points')
+x_w, y_w = zip(*worldTrajectoryPoints)
+x_mid = [x[0] for x in worldTrajectoryPoints]
+y_mid = [x[1] for x in worldTrajectoryPoints]
+phi = np.linspace(0, 2*np.pi, worldTrajectoryPoints.__len__())
+spl = make_interp_spline(phi, np.c_[x_mid, y_mid], k=2)
+phi_new = np.linspace(0, 2*np.pi, 300)
+x_new, y_new = spl(phi_new).T
+plt.plot(x_new, y_new, color='black', label='Center Line')
+#compute the interpolation between the points
+plt.axis('equal')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Trajectory')
+plt.legend()
+plt.show()
+plt.pause(60)
+#plt.waitforbuttonpress()
