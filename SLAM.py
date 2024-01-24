@@ -44,7 +44,7 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,
 # list of the points of the trajectory
 trajectoryPoints = []
 trackMidPoints = OrderedSet()
-worldTrajectoryPoints = OrderedSet()
+worldTrajectoryPoints = []
 innerConesSet = OrderedSet()
 outerConesSet = OrderedSet()
 startingConesSet = OrderedSet()
@@ -171,16 +171,31 @@ while True:
     phi_new = np.linspace(0, 2*np.pi, 300)
     x_new, y_new = spl(phi_new).T
     x_cone, y_cone = zip(*cone_coordinates)
-    plt.triplot(x_cone, y_cone, simplices, color='red', label='Delaunay Triangulation')
+    plt.triplot(x_cone, y_cone, simplices, color='red')
     plt.plot(x_new, y_new, color='black', label='Center Line')
-    for p in range(0,30):
+    plt.axis('equal')
+    plt.legend()
+    plt.title('Seen cones in CRF and ideal trajectory')
+    # il primo punto del nuovo pezzo di traiettoria nel WRF
+    point_homogeneous = np.array([x_new[0], y_new[0], 1])
+    point_world = np.dot(transformation_matrix, point_homogeneous)
+    point_world = point_world[:2]
+    #search the nearest point in the worldTrajectoryPoints, we need the index
+    if worldTrajectoryPoints.__len__() !=0:
+        nearestPoint = min(worldTrajectoryPoints, key=lambda x: distanceBetweenPoints((point_world[0], point_world[1]), (x[0], x[1])))
+        index = worldTrajectoryPoints.index(nearestPoint)
+        #now cut the worldTrajectoryPoints from the index to the end
+        worldTrajectoryPoints = worldTrajectoryPoints[:index]
+    else:
+        worldTrajectoryPoints.append((point_world[0], point_world[1]))
+    for p in range(1,100):
         point_homogeneous = np.array([x_new[p], y_new[p], 1])
         point_world = np.dot(transformation_matrix, point_homogeneous)
         point_world = point_world[:2]
         worldTrajectoryPoints.append((point_world[0], point_world[1]))
-    plt.axis('equal')
-    plt.legend()
-    plt.title('Seen cones in CRF and ideal trajectory')
+    x_world, y_world = zip(*worldTrajectoryPoints)
+    plt.subplot(1, 2, 1)
+    plt.plot(x_world, y_world, color='black', label='Ideal Trajectory')
     plt.show()
     plt.pause(0.01)
     plt.clf()
@@ -200,11 +215,12 @@ while True:
     carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, carEgoVelocity, curvature)
     print("The car is in position: ", carEgoPosition, " with yaw: ", carEgoYaw)
 print("Fine giro")
-print("The center line is: ", trackMidPoints)
 #plot the trajectory
 plt.clf()
 x_trajectory, y_trajectory = zip(*trajectoryPoints)
 plt.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
+x_world, y_world = zip(*worldTrajectoryPoints)
+plt.plot(x_world, y_world, color='black', label='Ideal Trajectory')
 plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
 plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
 plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
