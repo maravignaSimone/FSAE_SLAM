@@ -217,6 +217,13 @@ while True:
 print("Fine giro")
 # ----------------------------- #
 # Saving the trajectory in a json file #
+x_p = [x[0] for x in worldPathPoints]
+y_p = [x[1] for x in worldPathPoints]
+phi = np.linspace(0, 2*np.pi, worldPathPoints.__len__())
+spl = make_interp_spline(phi, np.c_[x_p, y_p], k=2)
+phi_new = np.linspace(0, 2*np.pi, 300)
+x_world, y_world = spl(phi_new).T
+worldPathPoints = list(zip(x_world, y_world))
 json_object = json.dumps(worldPathPoints)
 with open("worldPathPoints.json", "w") as outfile:
     outfile.truncate()
@@ -225,7 +232,6 @@ with open("worldPathPoints.json", "w") as outfile:
 plt.clf()
 x_trajectory, y_trajectory = zip(*trajectoryPoints)
 plt.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
-x_world, y_world = zip(*worldPathPoints)
 plt.plot(x_world, y_world, color='black', label='Ideal Trajectory')
 plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
 plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
