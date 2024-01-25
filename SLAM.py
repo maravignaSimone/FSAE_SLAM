@@ -45,9 +45,9 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,
 # ----------------------------- #
 trajectoryPoints = [] #here we store the actual trajectory of the car
 worldPathPoints = [] #here we store the ideal path/trajectory of the car in the WRF
-innerConesSet = OrderedSet() #here we store the inner cones that the car sees in the WRF
-outerConesSet = OrderedSet() #here we store the outer cones that the car sees in the WRF
-startingConesSet = OrderedSet() #here we store the starting cones that the car sees in the WRF
+innerConesSet = [] #here we store the inner cones that the car sees in the WRF
+outerConesSet = [] #here we store the outer cones that the car sees in the WRF
+startingConesSet = [] #here we store the starting cones that the car sees in the WRF
 # ----------------------------- #
 # Plotting the map WRF            #
 # ----------------------------- #
@@ -103,59 +103,62 @@ while True:
     print("Outer cones: ", seenOuterCones)
     # ----------------------------- #
     # Plotting the seen cones in the WRF, the ideal trajectory and tha actual trajectory of the car (left plot)
-    plt.subplot(1, 2, 1)
+    leftPlot = plt.subplot(1, 2, 1)
     seenInnerCones = sorted(seenInnerCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
     for cone in seenInnerCones:
         cone_homogeneous = np.array([cone[0], cone[1], 1])
         cone_world = np.dot(transformation_matrix, cone_homogeneous)
         cone_world = cone_world[:2]
-        innerConesSet.add((cone_world[0], cone_world[1]))
-    x_in, y_in = zip(*innerConesSet)
-    plt.scatter(x_in, y_in, color='yellow')
+        if (cone_world[0], cone_world[1]) not in innerConesSet:
+            innerConesSet.append((cone_world[0], cone_world[1]))
+    x_inner, y_inner = zip(*innerConesSet)
+    leftPlot.scatter(x_inner, y_inner, color='yellow')
     seenOuterCones = sorted(seenOuterCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
     for cone in seenOuterCones:
         cone_homogeneous = np.array([cone[0], cone[1], 1])
         cone_world = np.dot(transformation_matrix, cone_homogeneous)
         cone_world = cone_world[:2]
-        outerConesSet.add((cone_world[0], cone_world[1]))
-    x_out, y_out = zip(*outerConesSet)
-    plt.scatter(x_out, y_out, color='blue')
+        if (cone_world[0], cone_world[1]) not in outerConesSet:
+            outerConesSet.append((cone_world[0], cone_world[1]))
+    x_outer, y_outer = zip(*outerConesSet)
+    leftPlot.scatter(x_outer, y_outer, color='blue')
     for cone in seenStartingCone:
         cone_homogeneous = np.array([cone[0], cone[1], 1])
         cone_world = np.dot(transformation_matrix, cone_homogeneous)
         cone_world = cone_world[:2]
-        startingConesSet.add((cone_world[0], cone_world[1]))
-    x_start, y_start = zip(*startingConesSet)
-    plt.scatter(x_start, y_start, color='orange') 
+        if (cone_world[0], cone_world[1]) not in startingConesSet:
+            startingConesSet.append((cone_world[0], cone_world[1]))
+    x_starting, y_starting = zip(*startingConesSet)
+    leftPlot.scatter(x_starting, y_starting, color='orange')
     # Plotting the oriented car, with the right orientation(Yaw) anf FOV
-    plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
-    plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', scale=15)
-    plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green')
-    plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
+    leftPlot.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
+    leftPlot.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', scale=15)
+    leftPlot.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green')
+    leftPlot.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
     x_trajectory, y_trajectory = zip(*trajectoryPoints)
-    plt.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
-    plt.axis('equal')
-    plt.legend()
-    plt.title('Reconstructed map of the track in the WRF')
+    leftPlot.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
+    leftPlot.axis('equal')
+    leftPlot.legend()
+    leftPlot.set_title('Seen cones in WRF and actual trajectory')
     # ----------------------------- #
     # Plotting the seen cones in the CRF and the ideal trajectory (right plot)
-    plt.subplot(1, 2, 2)
+    rightPlot = plt.subplot(1, 2, 2)
     #plotting the seen cones
     if len(seenStartingCone) > 0:
         isStartSeeing = True
         x_seenStarting, y_seenStarting = zip(*seenStartingCone)
-        plt.scatter(x_seenStarting, y_seenStarting, color='orange', label='Seen Starting Cones')
+        rightPlot.scatter(x_seenStarting, y_seenStarting, color='orange', label='Seen Starting Cones')
     else:
         if isStartSeeing:
             isStartSeen = True
             isStartSeeing = False
     if len(seenInnerCones) > 0:
         x_seenInner, y_seenInner = zip(*seenInnerCones)
-        plt.scatter(x_seenInner, y_seenInner, color='yellow', label='Seen Inner Cones')
+        rightPlot.scatter(x_seenInner, y_seenInner, color='yellow', label='Seen Inner Cones')
     if len(seenOuterCones) > 0:
         x_seenOuter, y_seenOuter = zip(*seenOuterCones)
-        plt.scatter(x_seenOuter, y_seenOuter, color='blue', label='Seen Outer Cones')
-    plt.scatter(0, 0, color='green', label='Car')
+        rightPlot.scatter(x_seenOuter, y_seenOuter, color='blue', label='Seen Outer Cones')
+    rightPlot.scatter(0, 0, color='green', label='Car')
     # ----------------------------- #
     # Computing triangulation#
     # ----------------------------- #
@@ -169,11 +172,11 @@ while True:
     phi_new = np.linspace(0, 2*np.pi, 300)
     x_new, y_new = spl(phi_new).T
     x_cone, y_cone = zip(*cone_coordinates)
-    plt.triplot(x_cone, y_cone, simplices, color='red')
-    plt.plot(x_new, y_new, color='black', label='Center Line')
-    plt.axis('equal')
-    plt.legend()
-    plt.title('Seen cones in CRF and ideal trajectory')
+    rightPlot.triplot(x_cone, y_cone, simplices, color='red')
+    rightPlot.plot(x_new, y_new, color='black', label='Center Line')
+    rightPlot.axis('equal')
+    rightPlot.legend()
+    rightPlot.set_title('Seen cones in CRF and ideal trajectory')
     # ----------------------------- #
     # Reconstructing the ideal trajectory in the WRF#
     point_homogeneous = np.array([x_new[0], y_new[0], 1])
@@ -193,8 +196,8 @@ while True:
         point_world = point_world[:2]
         worldPathPoints.append((point_world[0], point_world[1]))
     x_world, y_world = zip(*worldPathPoints)
-    plt.subplot(1, 2, 1)
-    plt.plot(x_world, y_world, color='black', label='Ideal Trajectory')
+    #plt.subplot(1, 2, 1)
+    leftPlot.plot(x_world, y_world, color='black', label='Ideal Trajectory')
     plt.show()
     plt.pause(0.01)
     plt.clf()
