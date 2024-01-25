@@ -11,6 +11,7 @@ import numpy as np
 from scipy import interpolate
 from bicycle_model import BicycleModel
 from ordered_set import OrderedSet
+import json
 # ----------------------------- #
 # Defining global variables
 # ----------------------------- #
@@ -41,13 +42,12 @@ outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (11,1), (14,1), (17,1), (20,1
 """ innerCone = [(-5,5), (-2,5), (2,5), (5,5), (8,3), (11,1), (11,-4), (8,-7), (5,-8), (5,-4), (-5,1), (2,-8), (-2,-8),  (-5,-8)]
 outerCone = [(-5,1), (-2,1), (2,1), (5,1), (8,-1), (8,-3), (5,-4) , (-5,1),  (2,-4), (-2,-4), (-5,-4)] """
 
-# list of the points of the trajectory
-trajectoryPoints = []
-trackMidPoints = OrderedSet()
-worldTrajectoryPoints = []
-innerConesSet = OrderedSet()
-outerConesSet = OrderedSet()
-startingConesSet = OrderedSet()
+# ----------------------------- #
+trajectoryPoints = [] #here we store the actual trajectory of the car
+worldPathPoints = [] #here we store the ideal path/trajectory of the car in the WRF
+innerConesSet = OrderedSet() #here we store the inner cones that the car sees in the WRF
+outerConesSet = OrderedSet() #here we store the outer cones that the car sees in the WRF
+startingConesSet = OrderedSet() #here we store the starting cones that the car sees in the WRF
 # ----------------------------- #
 # Plotting the map WRF            #
 # ----------------------------- #
@@ -58,7 +58,7 @@ x_starting, y_starting = zip(*startingCone)
 # Plotting the map of the track
 # Plotting the oriented car, with the right orientation(Yaw) anf FOV
 plt.scatter(carEgoPosition[0], carEgoPosition[1], color='green', label='Car')
-plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw', scale=15)
+plt.quiver(carEgoPosition[0], carEgoPosition[1], math.cos(carEgoYaw), math.sin(carEgoYaw), color='green', label='Yaw')
 plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw+fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw+fovAngle/2)], color='green', label = 'FOV')
 plt.plot([carEgoPosition[0], carEgoPosition[0]+fovDistance*math.cos(carEgoYaw-fovAngle/2)], [carEgoPosition[1], carEgoPosition[1]+fovDistance*math.sin(carEgoYaw-fovAngle/2)], color='green')
 
@@ -84,24 +84,26 @@ isStartSeeing = False
 while True:
     if isStartSeeing and isStartSeen:
         break
+
     trajectoryPoints.append(carEgoPosition)
     # lists of the cones that are in the FOV of the car
     seenInnerCones = []
     seenOuterCones = []
     seenStartingCone = []
     
-    # ----------------------------- #
-    # Plotting the map CRF            #
-    # ----------------------------- #
-    # Plotting the map of what tha car sees in CRF
+    # ----------------------------- 
+    #computing the transformation matrixes
     transformation_matrix, inverse_transformation_matrix = computeTransformationMatrixes(carEgoPosition, carEgoYaw)
+    #computing the seen cones in the car FOV
     seenCones(carEgoPosition, carEgoYaw, innerCone, outerCone, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance, inverse_transformation_matrix)
+    #some debug prints
     print("The cones in the FOV of the car are:")
     print("Starting cone: ", seenStartingCone)
     print("Inner cones: ", seenInnerCones)
     print("Outer cones: ", seenOuterCones)
+    # ----------------------------- #
+    # Plotting the seen cones in the WRF, the ideal trajectory and tha actual trajectory of the car (left plot)
     plt.subplot(1, 2, 1)
-    #plotting the reconstructed map of the track in the WRF by applying the transformation matrix
     seenInnerCones = sorted(seenInnerCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
     for cone in seenInnerCones:
         cone_homogeneous = np.array([cone[0], cone[1], 1])
@@ -135,6 +137,8 @@ while True:
     plt.axis('equal')
     plt.legend()
     plt.title('Reconstructed map of the track in the WRF')
+    # ----------------------------- #
+    # Plotting the seen cones in the CRF and the ideal trajectory (right plot)
     plt.subplot(1, 2, 2)
     #plotting the seen cones
     if len(seenStartingCone) > 0:
@@ -158,12 +162,6 @@ while True:
     simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)   
     midPoints = findTriangulationMidPoints(simplices, cone_coordinates)
     midPoints = sorted(midPoints, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
-    #putting the midpoints in the WRF and then in a set 
-    for point in midPoints:
-        point_homogeneous = np.array([point[0], point[1], 1])
-        point_world = np.dot(transformation_matrix, point_homogeneous)
-        point_world = point_world[:2]
-        trackMidPoints.add((point_world[0], point_world[1]))
     x_mid = [x[0] for x in midPoints]
     y_mid = [x[1] for x in midPoints]
     phi = np.linspace(0, 2*np.pi, midPoints.__len__())
@@ -176,31 +174,32 @@ while True:
     plt.axis('equal')
     plt.legend()
     plt.title('Seen cones in CRF and ideal trajectory')
-    # il primo punto del nuovo pezzo di traiettoria nel WRF
+    # ----------------------------- #
+    # Reconstructing the ideal trajectory in the WRF#
     point_homogeneous = np.array([x_new[0], y_new[0], 1])
     point_world = np.dot(transformation_matrix, point_homogeneous)
     point_world = point_world[:2]
-    #search the nearest point in the worldTrajectoryPoints, we need the index
-    if worldTrajectoryPoints.__len__() !=0:
-        nearestPoint = min(worldTrajectoryPoints, key=lambda x: distanceBetweenPoints((point_world[0], point_world[1]), (x[0], x[1])))
-        index = worldTrajectoryPoints.index(nearestPoint)
-        #now cut the worldTrajectoryPoints from the index to the end
-        worldTrajectoryPoints = worldTrajectoryPoints[:index]
+    #search the nearest point in the worldPathPoints, we need the index
+    if worldPathPoints.__len__() !=0:
+        nearestPoint = min(worldPathPoints, key=lambda x: distanceBetweenPoints((point_world[0], point_world[1]), (x[0], x[1])))
+        index = worldPathPoints.index(nearestPoint)
+        #now cut the worldPathPoints from the index to the end
+        worldPathPoints = worldPathPoints[:index]
     else:
-        worldTrajectoryPoints.append((point_world[0], point_world[1]))
+        worldPathPoints.append((point_world[0], point_world[1]))
     for p in range(1,100):
         point_homogeneous = np.array([x_new[p], y_new[p], 1])
         point_world = np.dot(transformation_matrix, point_homogeneous)
         point_world = point_world[:2]
-        worldTrajectoryPoints.append((point_world[0], point_world[1]))
-    x_world, y_world = zip(*worldTrajectoryPoints)
+        worldPathPoints.append((point_world[0], point_world[1]))
+    x_world, y_world = zip(*worldPathPoints)
     plt.subplot(1, 2, 1)
     plt.plot(x_world, y_world, color='black', label='Ideal Trajectory')
     plt.show()
     plt.pause(0.01)
     plt.clf()
     # ----------------------------- #
-    # Computing the trajectory #
+    # Computing the actual trajectory with the pure pursuit algortithm #
     # ----------------------------- #
     #find the intersection between the circle of radius l_d and the line [x_new, y_new]
     for i in range(0, x_new.__len__()):
@@ -212,20 +211,25 @@ while True:
     alpha = math.atan2(TP[1], TP[0])
     curvature = 2*math.sin(alpha)/l_d
     print("The curvature is: ", curvature)
+    # make a forward step with the car
     carEgoPosition, carEgoYaw = car.update(carEgoPosition[0], carEgoPosition[1], carEgoYaw, carEgoVelocity, curvature)
     print("The car is in position: ", carEgoPosition, " with yaw: ", carEgoYaw)
 print("Fine giro")
-#plot the trajectory
+# ----------------------------- #
+# Saving the trajectory in a json file #
+json_object = json.dumps(worldPathPoints)
+with open("worldPathPoints.json", "w") as outfile:
+    outfile.truncate()
+    outfile.write(json_object)
+#plot the trajectory vs the ideal trajectory
 plt.clf()
 x_trajectory, y_trajectory = zip(*trajectoryPoints)
 plt.plot(x_trajectory, y_trajectory, color='red', label='Trajectory')
-x_world, y_world = zip(*worldTrajectoryPoints)
+x_world, y_world = zip(*worldPathPoints)
 plt.plot(x_world, y_world, color='black', label='Ideal Trajectory')
 plt.scatter(x_starting, y_starting, color='orange', label='Starting Cones')
 plt.scatter(x_inner, y_inner, color='yellow', label='Inner Cones')
 plt.scatter(x_outer, y_outer, color='blue', label='Outer Cones')
-x_m, y_m = zip(*trackMidPoints)
-#plt.scatter(x_m, y_m, color='black', label='Mid Points')
 plt.axis('equal')
 plt.title('Trajectory')
 plt.legend()
