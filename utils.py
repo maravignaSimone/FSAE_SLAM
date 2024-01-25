@@ -8,6 +8,7 @@
 import math
 from scipy.spatial import Delaunay
 import numpy as np
+from scipy.interpolate import make_interp_spline
 # ----------------------------- #
 # Defining helper functions    #
 # ----------------------------- #
@@ -148,4 +149,23 @@ def computeTransformationMatrixes(carEgoPosition, carEgoYaw):
     inverse_transformation_matrix = np.linalg.inv(transformation_matrix)
     return transformation_matrix, inverse_transformation_matrix
     
-    
+def computeSpline(points):
+    """
+    This function returns the spline of a passed set of points.
+    """
+    x= [x[0] for x in points]
+    y= [x[1] for x in points]
+    phi = np.linspace(0, 2*np.pi, points.__len__())
+    spl = make_interp_spline(phi, np.c_[x, y], k=2)
+    phi_new = np.linspace(0, 2*np.pi, 300)
+    x_new, y_new = spl(phi_new).T
+    return x_new, y_new
+
+def pointFromCameraToWorld(point, transformation_matrix):
+    """
+    This function returns the point in the world reference frame.
+    """
+    point_homogeneous = np.array([point[0], point[1], 1])
+    point_world = np.dot(transformation_matrix, point_homogeneous)
+    point_world = point_world[:2]
+    return point_world

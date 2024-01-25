@@ -106,26 +106,20 @@ while True:
     leftPlot = plt.subplot(1, 2, 1)
     seenInnerCones = sorted(seenInnerCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
     for cone in seenInnerCones:
-        cone_homogeneous = np.array([cone[0], cone[1], 1])
-        cone_world = np.dot(transformation_matrix, cone_homogeneous)
-        cone_world = cone_world[:2]
+        cone_world = pointFromCameraToWorld(cone, transformation_matrix)
         if (cone_world[0], cone_world[1]) not in innerConesSet:
             innerConesSet.append((cone_world[0], cone_world[1]))
     x_inner, y_inner = zip(*innerConesSet)
     leftPlot.scatter(x_inner, y_inner, color='yellow')
     seenOuterCones = sorted(seenOuterCones, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
     for cone in seenOuterCones:
-        cone_homogeneous = np.array([cone[0], cone[1], 1])
-        cone_world = np.dot(transformation_matrix, cone_homogeneous)
-        cone_world = cone_world[:2]
+        cone_world = pointFromCameraToWorld(cone, transformation_matrix)
         if (cone_world[0], cone_world[1]) not in outerConesSet:
             outerConesSet.append((cone_world[0], cone_world[1]))
     x_outer, y_outer = zip(*outerConesSet)
     leftPlot.scatter(x_outer, y_outer, color='blue')
     for cone in seenStartingCone:
-        cone_homogeneous = np.array([cone[0], cone[1], 1])
-        cone_world = np.dot(transformation_matrix, cone_homogeneous)
-        cone_world = cone_world[:2]
+        cone_world = pointFromCameraToWorld(cone, transformation_matrix)
         if (cone_world[0], cone_world[1]) not in startingConesSet:
             startingConesSet.append((cone_world[0], cone_world[1]))
     x_starting, y_starting = zip(*startingConesSet)
@@ -165,12 +159,7 @@ while True:
     simplices, cone_coordinates = triangulation(seenInnerCones, seenOuterCones, seenStartingCone)   
     midPoints = findTriangulationMidPoints(simplices, cone_coordinates)
     midPoints = sorted(midPoints, key=lambda x: distanceBetweenPoints((0,0), (x[0], x[1])))
-    x_mid = [x[0] for x in midPoints]
-    y_mid = [x[1] for x in midPoints]
-    phi = np.linspace(0, 2*np.pi, midPoints.__len__())
-    spl = make_interp_spline(phi, np.c_[x_mid, y_mid], k=2)
-    phi_new = np.linspace(0, 2*np.pi, 300)
-    x_new, y_new = spl(phi_new).T
+    x_new, y_new = computeSpline(midPoints)
     x_cone, y_cone = zip(*cone_coordinates)
     rightPlot.triplot(x_cone, y_cone, simplices, color='red')
     rightPlot.plot(x_new, y_new, color='black', label='Center Line')
@@ -179,9 +168,7 @@ while True:
     rightPlot.set_title('Seen cones in CRF and ideal trajectory')
     # ----------------------------- #
     # Reconstructing the ideal trajectory in the WRF#
-    point_homogeneous = np.array([x_new[0], y_new[0], 1])
-    point_world = np.dot(transformation_matrix, point_homogeneous)
-    point_world = point_world[:2]
+    point_world = pointFromCameraToWorld((x_new[0], y_new[0]), transformation_matrix)
     #search the nearest point in the worldPathPoints, we need the index
     if worldPathPoints.__len__() !=0:
         nearestPoint = min(worldPathPoints, key=lambda x: distanceBetweenPoints((point_world[0], point_world[1]), (x[0], x[1])))
@@ -191,9 +178,7 @@ while True:
     else:
         worldPathPoints.append((point_world[0], point_world[1]))
     for p in range(1,100):
-        point_homogeneous = np.array([x_new[p], y_new[p], 1])
-        point_world = np.dot(transformation_matrix, point_homogeneous)
-        point_world = point_world[:2]
+        point_world = pointFromCameraToWorld((x_new[p], y_new[p]), transformation_matrix)
         worldPathPoints.append((point_world[0], point_world[1]))
     x_world, y_world = zip(*worldPathPoints)
     #plt.subplot(1, 2, 1)
@@ -220,12 +205,7 @@ while True:
 print("Fine giro")
 # ----------------------------- #
 # Saving the trajectory in a json file #
-x_p = [x[0] for x in worldPathPoints]
-y_p = [x[1] for x in worldPathPoints]
-phi = np.linspace(0, 2*np.pi, worldPathPoints.__len__())
-spl = make_interp_spline(phi, np.c_[x_p, y_p], k=2)
-phi_new = np.linspace(0, 2*np.pi, 300)
-x_world, y_world = spl(phi_new).T
+x_world, y_world = computeSpline(worldPathPoints)
 worldPathPoints = list(zip(x_world, y_world))
 json_object = json.dumps(worldPathPoints)
 with open("worldPathPoints.json", "w") as outfile:
