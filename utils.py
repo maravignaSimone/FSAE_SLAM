@@ -169,3 +169,12 @@ def pointFromCameraToWorld(point, transformation_matrix):
     point_world = np.dot(transformation_matrix, point_homogeneous)
     point_world = point_world[:2]
     return point_world
+
+def pointFromWorldToCamera(point, inverse_transformation_matrix):
+    """
+    This function returns the point in the camera reference frame.
+    """
+    point_homogeneous = np.array([point[0], point[1], 1])
+    point_camera = np.dot(inverse_transformation_matrix, point_homogeneous)
+    point_camera = point_camera[:2]
+    return point_camera
