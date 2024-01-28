@@ -12,6 +12,7 @@ from scipy import interpolate
 from bicycle_model import BicycleModel
 from ordered_set import OrderedSet
 import json
+import keyboard
 # ----------------------------- #
 # Defining global variables
 # ----------------------------- #
@@ -82,7 +83,9 @@ plt.waitforbuttonpress()
 isStartSeen = False #TODO: implementare il fermarsi dopo gli starting cone
 isStartSeeing = False
 while True:
-    
+    if keyboard.is_pressed('q'):  # if key 'q' is pressed 
+        print('You Pressed A Key!')
+        break  # finish the loop
 
     trajectoryPoints.append(carEgoPosition)
     # lists of the cones that are in the FOV of the car
