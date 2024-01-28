@@ -67,13 +67,16 @@ def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone, seenInn
     """
     for cone in innerCones:
         if isInFov(carPosition, carYaw, cone, coneRadius, fovAngle, fovDistance):
-            seenInnerCones.append(pointFromWorldToCamera(cone, inverse_transformation_matrix))
+            noisy_cone = np.array(cone) + np.random.normal(scale=0, size=len(cone))
+            seenInnerCones.append(pointFromWorldToCamera(noisy_cone, inverse_transformation_matrix))
     for cone in outerCones:
         if isInFov(carPosition, carYaw, cone, coneRadius, fovAngle, fovDistance):
-            seenOuterCones.append(pointFromWorldToCamera(cone, inverse_transformation_matrix))
+            noisy_cone = np.array(cone) + np.random.normal(scale=0, size=len(cone))
+            seenOuterCones.append(pointFromWorldToCamera(noisy_cone, inverse_transformation_matrix))
     for cone in startingCone:
         if isInFov(carPosition, carYaw, cone, startingConeRadius, fovAngle, fovDistance):
-            seenStartingCone.append(pointFromWorldToCamera(cone, inverse_transformation_matrix))
+            noisy_cone = np.array(cone) + np.random.normal(scale=0, size=len(cone))
+            seenStartingCone.append(pointFromWorldToCamera(noisy_cone, inverse_transformation_matrix))
 
 def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
     """
