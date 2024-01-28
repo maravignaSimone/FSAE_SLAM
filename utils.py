@@ -61,28 +61,19 @@ def isInFov(carPosition, carYaw, conePosition, coneRadius, fovAngle, fovDistance
     else:
         return False
 
-def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance, transformation_matrix):
+def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone, seenInnerCones, seenOuterCones, seenStartingCone, coneRadius, startingConeRadius, fovAngle, fovDistance, inverse_transformation_matrix):
     """
     This function returns the list of cones that are in the FOV of the car.
     """
     for cone in innerCones:
         if isInFov(carPosition, carYaw, cone, coneRadius, fovAngle, fovDistance):
-            cone = cone + (1,)
-            coneCRF = np.dot(transformation_matrix, cone).T
-            coneCRF = coneCRF[:-1]
-            seenInnerCones.append(coneCRF)
+            seenInnerCones.append(pointFromWorldToCamera(cone, inverse_transformation_matrix))
     for cone in outerCones:
         if isInFov(carPosition, carYaw, cone, coneRadius, fovAngle, fovDistance):
-            cone = cone + (1,)
-            coneCRF = np.dot(transformation_matrix, cone).T
-            coneCRF = coneCRF[:-1]
-            seenOuterCones.append(coneCRF)
+            seenOuterCones.append(pointFromWorldToCamera(cone, inverse_transformation_matrix))
     for cone in startingCone:
         if isInFov(carPosition, carYaw, cone, startingConeRadius, fovAngle, fovDistance):
-            cone = cone + (1,)
-            coneCRF = np.dot(transformation_matrix, cone).T
-            coneCRF = coneCRF[:-1]
-            seenStartingCone.append(coneCRF)
+            seenStartingCone.append(pointFromWorldToCamera(cone, inverse_transformation_matrix))
 
 def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
     """
