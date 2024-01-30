@@ -161,3 +161,7 @@ cython_debug/
 script.py
 ordered.py
 worldPathPoints.json
+readcones.py
+blueConesTracking.txt
+yellowConesTracking.txt
+redConesTracking.txt
