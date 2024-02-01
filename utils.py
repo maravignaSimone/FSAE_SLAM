@@ -20,13 +20,6 @@ def distanceBetweenPoints(point1, point2):
     distance = ((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2)**0.5
     return distance
 
-def angleBetweenPoints(point1, point2):
-    """
-    This function returns the angle between two points.
-    """
-    # calculating the angle between the two points
-    angle = math.atan2(point2[1] - point1[1], point2[0] - point1[0])
-    return angle
 
 def angleBetweenTwoVectors(vector1, vector2):
     """
@@ -78,10 +71,6 @@ def seenCones(carPosition, carYaw, innerCones, outerCones, startingCone, seenInn
             noisy_cone = np.array(cone) + np.random.normal(scale=0, size=len(cone))
             seenStartingCone.append(pointFromWorldToCamera(noisy_cone, inverse_transformation_matrix))
 
-def centerLinePath(seenInnerCones, seenOuterCones, seenStartingCone):
-    """
-    This function find the path at the center of the road (between inner and outer cones).
-    """
 
 def triangulation(seenInnerCones, seenOuterCones, seenStartingCone):
     """
