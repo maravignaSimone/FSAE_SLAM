@@ -6,11 +6,7 @@
 # ----------------------------- #
 import matplotlib.pyplot as plt
 from utils import *
-from scipy.interpolate import make_interp_spline
-import numpy as np
-from scipy import interpolate
 from bicycle_model import BicycleModel
-from ordered_set import OrderedSet
 import json
 import keyboard
 # ----------------------------- #
